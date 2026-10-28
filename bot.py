@@ -14,7 +14,6 @@ def home():
     return "Bot is Running 24/7 Successfully!", 200
 
 def run_flask():
-    # Render apne aap PORT assign karega
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
 
@@ -26,27 +25,50 @@ def keep_alive():
 
 
 # ==========================================
-# 🛑 YAHAN APNI DETAILS DALO 🛑
+# 🛑 APNI DETAILS YAHAN CHECK KAR LO 🛑
 # ==========================================
-BOT_TOKEN = "9028905265:AAGjwYOrfuAJnicGHPE4BtG2IMPDX9HVInk" # BotFather se mila token yahan daalein
-CHANNEL_USERNAME = "@GodMode_SMS" # Apne channel ka username daalein
-SASTASMS_API_KEY = "Stp_c02085951a459afbedc5ba2203aea8d553472b25bf0b909e" # Tumhari SastaSMS API
+BOT_TOKEN = "9028905265:AAGjwYOrfuAJnicGHPE4BtG2IMPDX9HVInk" 
+CHANNEL_USERNAME = "@YourChannelUsername" # YAHAN APNA CHANNEL USERNAME DAAL LENA
+SASTASMS_API_KEY = "Stp_c02085951a459afbedc5ba2203aea8d553472b25bf0b909e" 
+API_BASE_URL = "https://sastasms.pro/api/handler_api.php" 
 
-# 👑 YAHAN APNI AUR APNE DOST KI TELEGRAM USER ID DALO (Numbers mein)
-OWNER_IDS = [8226471885, 8692723368] # Example id hata kar apni asli ID daalna
+OWNER_IDS = [8226471885, 8692723368] 
 # ==========================================
 
 bot = telebot.TeleBot(BOT_TOKEN)
-
-# Abhi ke liye temporary wallet data
 users_db = {} 
 
-# --- CHANNEL JOIN CHECK KARNE WALA SYSTEM ---
+# --- EMOJI / ICONS MAP ---
+SERVICE_ICONS = {
+    'wa': '💬', 'whatsapp': '💬',
+    'tg': '✈️', 'telegram': '✈️',
+    'ig': '📸', 'instagram': '📸',
+    'fb': '📘', 'facebook': '📘',
+    'go': '🌐', 'google': '🌐',
+    'tw': '🐦', 'twitter': '🐦', 'x': '🐦',
+    'nf': '🍿', 'netflix': '🍿',
+    'am': '🛒', 'amazon': '🛒',
+    'dc': '🎮', 'discord': '🎮',
+    'yt': '▶️', 'youtube': '▶️'
+}
+
+# --- COUNTRY FLAGS MAP ---
+COUNTRY_FLAGS = {
+    'in': '🇮🇳', 'india': '🇮🇳',
+    'us': '🇺🇸', 'usa': '🇺🇸',
+    'uk': '🇬🇧', 'gb': '🇬🇧',
+    'ru': '🇷🇺', 'russia': '🇷🇺',
+    'id': '🇮🇩', 'indonesia': '🇮🇩',
+    'br': '🇧🇷', 'brazil': '🇧🇷',
+    'cn': '🇨🇳', 'china': '🇨🇳',
+    'pk': '🇵🇰', 'pakistan': '🇵🇰',
+    'bd': '🇧🇩', 'bangladesh': '🇧🇩'
+}
+
+# --- CHANNEL JOIN CHECK ---
 def check_membership(user_id):
-    # Agar user khud OWNER hai, toh usko channel join check bypass karne do (optional)
     if user_id in OWNER_IDS:
         return True
-        
     try:
         status = bot.get_chat_member(CHANNEL_USERNAME, user_id).status
         if status in ['member', 'administrator', 'creator']:
@@ -55,21 +77,24 @@ def check_membership(user_id):
     except:
         return False
 
-# --- ADMIN COMMAND (Sirf Owners ke liye) ---
-@bot.message_handler(commands=['admin'])
-def admin_panel(message):
-    user_id = message.from_user.id
-    if user_id in OWNER_IDS:
-        bot.reply_to(message, "👑 *Welcome Boss!* Aap dono owners mein se ek hain. Yahan aap aage chal kar admin buttons laga sakte hain.", parse_mode="Markdown")
-    else:
-        bot.reply_to(message, "❌ Aap owner nahi hain!")
+# --- SASTASMS API CALL ---
+def fetch_services():
+    try:
+        url = f"{API_BASE_URL}?api_key={SASTASMS_API_KEY}&action=getServicesList&format=json"
+        response = requests.get(url, timeout=10)
+        
+        if response.status_code == 200:
+            return response.json()
+        return None
+    except Exception as e:
+        print(f"Error fetching services: {e}")
+        return None
 
-# --- START COMMAND & MAIN MENU ---
+# --- START COMMAND ---
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_id = message.from_user.id
     
-    # Check karega ki bande ne channel join kiya hai ya nahi
     if not check_membership(user_id):
         markup = InlineKeyboardMarkup()
         markup.add(InlineKeyboardButton("📢 Join Our Channel", url=f"https://t.me/{CHANNEL_USERNAME[1:]}"))
@@ -77,11 +102,9 @@ def send_welcome(message):
         bot.send_message(message.chat.id, "👋 Welcome! Please join our official channel to use this bot.", reply_markup=markup)
         return
 
-    # Agar naya user hai toh uska wallet 0.0 balance ke sath bana dega
     if user_id not in users_db:
         users_db[user_id] = {"balance": 0.0}
 
-    # Main Menu ke Buttons
     markup = InlineKeyboardMarkup(row_width=2)
     btn1 = InlineKeyboardButton("🛒 Products & Services", callback_data="services")
     btn2 = InlineKeyboardButton("💳 My Wallet", callback_data="wallet")
@@ -96,12 +119,11 @@ def send_welcome(message):
     )
     bot.send_message(message.chat.id, welcome_text, reply_markup=markup, parse_mode="Markdown")
 
-# --- BUTTON DABAANE PAR KYA HOGA (CALLBACK HANDLER) ---
+# --- CALLBACK HANDLER ---
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     user_id = call.from_user.id
 
-    # 1. Channel Join Check Button
     if call.data == "check_join":
         if check_membership(user_id):
             bot.delete_message(call.message.chat.id, call.message.message_id)
@@ -109,7 +131,6 @@ def callback_query(call):
         else:
             bot.answer_callback_query(call.id, "❌ You haven't joined the channel yet!", show_alert=True)
 
-    # 2. Wallet Button
     elif call.data == "wallet":
         balance = users_db.get(user_id, {}).get("balance", 0.0)
         text = f"💳 *Your Wallet*\n\n💰 Balance: ₹{balance}\n\nTo add funds, please contact Support."
@@ -117,26 +138,68 @@ def callback_query(call):
         markup.add(InlineKeyboardButton("🔙 Back", callback_data="back_home"))
         bot.edit_message_text(text, call.message.chat.id, call.message.message_id, reply_markup=markup, parse_mode="Markdown")
 
-    # 3. Support Button (Tumhara aur dost ka link)
     elif call.data == "support":
         markup = InlineKeyboardMarkup(row_width=1)
-        markup.add(InlineKeyboardButton("👨‍💻 Main Owner", url="https://t.me/YourUsernameHere")) # Yahan apna username daalna
-        markup.add(InlineKeyboardButton("👨‍💻 Co-Owner", url="https://t.me/FriendUsernameHere")) # Yahan dost ka username daalna
+        markup.add(InlineKeyboardButton("👨‍💻 Main Owner", url="tg://user?id=8226471885")) 
+        markup.add(InlineKeyboardButton("👨‍💻 Co-Owner", url="tg://user?id=8692723368")) 
         markup.add(InlineKeyboardButton("🔙 Back", callback_data="back_home"))
         bot.edit_message_text("📞 *Support Team*\n\nNeed help? Contact us below:", call.message.chat.id, call.message.message_id, reply_markup=markup, parse_mode="Markdown")
 
-    # 4. Products & Services (SastaSMS API)
     elif call.data == "services":
-        bot.answer_callback_query(call.id, "Loading services... 🔄")
+        bot.answer_callback_query(call.id, "Fetching live services... 🔄")
         
-        # Abhi dummy text dikhayega
-        text = "🛒 *Available Services*\n\n📱 WhatsApp OTP - ₹10\n✈️ Telegram OTP - ₹12\n📸 Instagram OTP - ₹8\n\n_(Connecting to Server...)_"
+        services_data = fetch_services()
+        
+        if services_data:
+            text = "🛒 *All Available Services (Live)*\n\n"
+            count = 0
+            
+            for service, details in services_data.items():
+                if count >= 100: 
+                    break
+                
+                s_lower = str(service).lower()
+                
+                # 1. Premium Icon Finder
+                icon = "📱"
+                for key, val in SERVICE_ICONS.items():
+                    if key in s_lower:
+                        icon = val
+                        break
+                        
+                # 2. Country Flag Finder
+                flag = "🌍" # Default global
+                for key, val in COUNTRY_FLAGS.items():
+                    # Check if country code is part of the service name (e.g. wa_in)
+                    if f"_{key}" in s_lower or key == s_lower.split('_')[-1]:
+                        flag = val
+                        break
+
+                # 3. 70% PROFIT CALCULATOR
+                base_price = details.get('price', details) if isinstance(details, dict) else details
+                try:
+                    # Original price me 70% add kar rahe hain (Price * 1.70)
+                    profit_price = float(base_price) * 1.70
+                    final_price = round(profit_price, 2) # 2 decimal tak round off
+                except ValueError:
+                    final_price = base_price # Agar price number me nahi aaya toh as it is dikhayega
+                
+                # Final Text
+                text += f"{icon} {flag} *{str(service).upper()}* - ₹{final_price}\n"
+                count += 1
+                
+                # Telegram 4096 limit bypass
+                if len(text) > 3800:
+                    break
+                    
+            text += "\n_(Prices & Availability are fetched directly from server)_"
+        else:
+            text = "❌ *Error*\n\nServer is busy or API response failed. Please try again later."
             
         markup = InlineKeyboardMarkup()
         markup.add(InlineKeyboardButton("🔙 Back", callback_data="back_home"))
         bot.edit_message_text(text, call.message.chat.id, call.message.message_id, reply_markup=markup, parse_mode="Markdown")
 
-    # 5. Back Button
     elif call.data == "back_home":
         bot.delete_message(call.message.chat.id, call.message.message_id)
         send_welcome(call.message)
@@ -153,7 +216,6 @@ def start_bot():
 
 if __name__ == "__main__":
     print("Starting Flask Web Server...")
-    keep_alive()  # Pehle Flask chalega
-    
+    keep_alive() 
     print("Starting Main Bot...")
-    start_bot()   # Phir bot chalega crash-proof mode mein
+    start_bot()
