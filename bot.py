@@ -28,7 +28,7 @@ def keep_alive():
 # 🛑 APNI DETAILS YAHAN CHECK KAR LO 🛑
 # ==========================================
 BOT_TOKEN = "9028905265:AAGjwYOrfuAJnicGHPE4BtG2IMPDX9HVInk" 
-CHANNEL_USERNAME = "@YourChannelUsername" # YAHAN APNA CHANNEL USERNAME DAAL LENA
+CHANNEL_USERNAME = "@GodMode_SMS" # YAHAN APNA CHANNEL USERNAME DAAL LENA
 SASTASMS_API_KEY = "Stp_c02085951a459afbedc5ba2203aea8d553472b25bf0b909e" 
 API_BASE_URL = "https://sastasms.pro/api/handler_api.php" 
 
