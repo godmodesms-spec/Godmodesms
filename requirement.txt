@@ -1,1 +1,2 @@
-prateek bhai 😋
+pyTelegramBotAPI
+requests
