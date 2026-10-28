@@ -67,24 +67,23 @@ def check_membership(user_id):
         print(f"Join check error: {e}")
         return False
 
-# --- SASTASMS API CALL (WITH ERROR CATCHING) ---
-def fetch_services():
+# --- SASTASMS API CALL (WITH ERROR CATCHING) --
+    def fetch_services():
     try:
-        url = f"{API_BASE_URL}?api_key={SASTASMS_API_KEY}&action=getServicesList&format=json"
-        response = requests.get(url, timeout=15) 
+        # getServicesList ki jagah getPrices use kiya hai
+        url = f"{API_BASE_URL}?api_key={SASTASMS_API_KEY}&action=getPrices&country=in&format=json"
+        response = requests.get(url, timeout=10)
+        
+        print("API Response Code:", response.status_code)
+        print("API Response Data:", response.text) # Ye line Render logs me response print karegi
         
         if response.status_code == 200:
-            try:
-                return response.json()
-            except ValueError:
-                print(f"API ne JSON nahi bheja! Raw Response: {response.text}")
-                return None
-        else:
-            print(f"API Error! Status Code: {response.status_code}")
-            return None
+            return response.json()
+        return None
     except Exception as e:
         print(f"Error fetching services: {e}")
         return None
+        
 
 # --- START COMMAND ---
 @bot.message_handler(commands=['start'])
