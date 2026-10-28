@@ -68,7 +68,7 @@ def check_membership(user_id):
         return False
 
 # --- SASTASMS API CALL (WITH ERROR CATCHING) --
-    def fetch_services():
+def fetch_services():
     try:
         # getServicesList ki jagah getPrices use kiya hai
         url = f"{API_BASE_URL}?api_key={SASTASMS_API_KEY}&action=getPrices&country=in&format=json"
@@ -84,7 +84,6 @@ def check_membership(user_id):
         print(f"Error fetching services: {e}")
         return None
         
-
 # --- START COMMAND ---
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
