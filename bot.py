@@ -28,12 +28,12 @@ def keep_alive():
 # ==========================================
 # 🛑 YAHAN APNI DETAILS DALO 🛑
 # ==========================================
-BOT_TOKEN = "YAHAN_BOTFATHER_WALA_TOKEN_DALO" # BotFather se mila token yahan daalein
-CHANNEL_USERNAME = "@YourChannelUsername" # Apne channel ka username daalein
+BOT_TOKEN = "9028905265:AAGjwYOrfuAJnicGHPE4BtG2IMPDX9HVInk" # BotFather se mila token yahan daalein
+CHANNEL_USERNAME = "@GodMode_SMS" # Apne channel ka username daalein
 SASTASMS_API_KEY = "Stp_c02085951a459afbedc5ba2203aea8d553472b25bf0b909e" # Tumhari SastaSMS API
 
 # 👑 YAHAN APNI AUR APNE DOST KI TELEGRAM USER ID DALO (Numbers mein)
-OWNER_IDS = [1234567890, 9876543210] # Example id hata kar apni asli ID daalna
+OWNER_IDS = [8226471885, 8692723368] # Example id hata kar apni asli ID daalna
 # ==========================================
 
 bot = telebot.TeleBot(BOT_TOKEN)
