@@ -25,43 +25,32 @@ def keep_alive():
 
 
 # ==========================================
-# 🛑 APNI DETAILS YAHAN CHECK KAR LO 🛑
+# 🛑 APNI DETAILS YAHAN SET HAIN 🛑
 # ==========================================
 BOT_TOKEN = "9028905265:AAGjwYOrfuAJnicGHPE4BtG2IMPDX9HVInk" 
-CHANNEL_USERNAME = "@GodMode_SMS" # YAHAN APNA CHANNEL USERNAME DAAL LENA
+CHANNEL_USERNAME = "@GodMode_SMS" 
 SASTASMS_API_KEY = "Stp_c02085951a459afbedc5ba2203aea8d553472b25bf0b909e" 
-API_BASE_URL = "https://sastasms.pro/api/handler_api.php" 
-
+API_BASE_URL = "https://sastasms.pro/stubs/handler_api.php" 
 OWNER_IDS = [8226471885, 8692723368] 
 # ==========================================
 
 bot = telebot.TeleBot(BOT_TOKEN)
 users_db = {} 
 
-# --- EMOJI / ICONS MAP ---
+# --- EMOJI & FLAGS MAP ---
 SERVICE_ICONS = {
-    'wa': '💬', 'whatsapp': '💬',
-    'tg': '✈️', 'telegram': '✈️',
-    'ig': '📸', 'instagram': '📸',
-    'fb': '📘', 'facebook': '📘',
-    'go': '🌐', 'google': '🌐',
-    'tw': '🐦', 'twitter': '🐦', 'x': '🐦',
-    'nf': '🍿', 'netflix': '🍿',
-    'am': '🛒', 'amazon': '🛒',
-    'dc': '🎮', 'discord': '🎮',
-    'yt': '▶️', 'youtube': '▶️'
+    'wa': '💬', 'whatsapp': '💬', 'tg': '✈️', 'telegram': '✈️',
+    'ig': '📸', 'instagram': '📸', 'fb': '📘', 'facebook': '📘',
+    'go': '🌐', 'google': '🌐', 'tw': '🐦', 'twitter': '🐦', 'x': '🐦',
+    'nf': '🍿', 'netflix': '🍿', 'am': '🛒', 'amazon': '🛒',
+    'dc': '🎮', 'discord': '🎮', 'yt': '▶️', 'youtube': '▶️'
 }
 
-# --- COUNTRY FLAGS MAP ---
 COUNTRY_FLAGS = {
-    'in': '🇮🇳', 'india': '🇮🇳',
-    'us': '🇺🇸', 'usa': '🇺🇸',
-    'uk': '🇬🇧', 'gb': '🇬🇧',
-    'ru': '🇷🇺', 'russia': '🇷🇺',
-    'id': '🇮🇩', 'indonesia': '🇮🇩',
-    'br': '🇧🇷', 'brazil': '🇧🇷',
-    'cn': '🇨🇳', 'china': '🇨🇳',
-    'pk': '🇵🇰', 'pakistan': '🇵🇰',
+    'in': '🇮🇳', 'india': '🇮🇳', 'us': '🇺🇸', 'usa': '🇺🇸',
+    'uk': '🇬🇧', 'gb': '🇬🇧', 'ru': '🇷🇺', 'russia': '🇷🇺',
+    'id': '🇮🇩', 'indonesia': '🇮🇩', 'br': '🇧🇷', 'brazil': '🇧🇷',
+    'cn': '🇨🇳', 'china': '🇨🇳', 'pk': '🇵🇰', 'pakistan': '🇵🇰',
     'bd': '🇧🇩', 'bangladesh': '🇧🇩'
 }
 
@@ -74,18 +63,25 @@ def check_membership(user_id):
         if status in ['member', 'administrator', 'creator']:
             return True
         return False
-    except:
+    except Exception as e:
+        print(f"Join check error: {e}")
         return False
 
-# --- SASTASMS API CALL ---
+# --- SASTASMS API CALL (WITH ERROR CATCHING) ---
 def fetch_services():
     try:
         url = f"{API_BASE_URL}?api_key={SASTASMS_API_KEY}&action=getServicesList&format=json"
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, timeout=15) 
         
         if response.status_code == 200:
-            return response.json()
-        return None
+            try:
+                return response.json()
+            except ValueError:
+                print(f"API ne JSON nahi bheja! Raw Response: {response.text}")
+                return None
+        else:
+            print(f"API Error! Status Code: {response.status_code}")
+            return None
     except Exception as e:
         print(f"Error fetching services: {e}")
         return None
@@ -97,7 +93,8 @@ def send_welcome(message):
     
     if not check_membership(user_id):
         markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("📢 Join Our Channel", url=f"https://t.me/{CHANNEL_USERNAME[1:]}"))
+        clean_channel_name = CHANNEL_USERNAME.replace("@", "")
+        markup.add(InlineKeyboardButton("📢 Join Our Channel", url=f"https://t.me/{clean_channel_name}"))
         markup.add(InlineKeyboardButton("✅ I have Joined", callback_data="check_join"))
         bot.send_message(message.chat.id, "👋 Welcome! Please join our official channel to use this bot.", reply_markup=markup)
         return
@@ -150,7 +147,7 @@ def callback_query(call):
         
         services_data = fetch_services()
         
-        if services_data:
+        if services_data and isinstance(services_data, dict):
             text = "🛒 *All Available Services (Live)*\n\n"
             count = 0
             
@@ -160,41 +157,35 @@ def callback_query(call):
                 
                 s_lower = str(service).lower()
                 
-                # 1. Premium Icon Finder
                 icon = "📱"
                 for key, val in SERVICE_ICONS.items():
                     if key in s_lower:
                         icon = val
                         break
                         
-                # 2. Country Flag Finder
-                flag = "🌍" # Default global
+                flag = "🌍" 
                 for key, val in COUNTRY_FLAGS.items():
-                    # Check if country code is part of the service name (e.g. wa_in)
                     if f"_{key}" in s_lower or key == s_lower.split('_')[-1]:
                         flag = val
                         break
 
-                # 3. 70% PROFIT CALCULATOR
+                # 70% PROFIT CALCULATOR
                 base_price = details.get('price', details) if isinstance(details, dict) else details
                 try:
-                    # Original price me 70% add kar rahe hain (Price * 1.70)
                     profit_price = float(base_price) * 1.70
-                    final_price = round(profit_price, 2) # 2 decimal tak round off
-                except ValueError:
-                    final_price = base_price # Agar price number me nahi aaya toh as it is dikhayega
+                    final_price = round(profit_price, 2)
+                except (ValueError, TypeError):
+                    final_price = base_price
                 
-                # Final Text
                 text += f"{icon} {flag} *{str(service).upper()}* - ₹{final_price}\n"
                 count += 1
                 
-                # Telegram 4096 limit bypass
                 if len(text) > 3800:
                     break
                     
             text += "\n_(Prices & Availability are fetched directly from server)_"
         else:
-            text = "❌ *Error*\n\nServer is busy or API response failed. Please try again later."
+            text = "❌ *Error*\n\nServer is busy or API response format is incorrect. Please try again later."
             
         markup = InlineKeyboardMarkup()
         markup.add(InlineKeyboardButton("🔙 Back", callback_data="back_home"))
