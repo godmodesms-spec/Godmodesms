@@ -30,7 +30,7 @@ def keep_alive():
 BOT_TOKEN = "9028905265:AAE0XYHL2KvqgpSff3QYWK-_HKwGSC8WFUY" 
 CHANNEL_USERNAME = "@GodMode_SMS" 
 SASTASMS_API_KEY = "Stp_c02085951a459afbedc5ba2203aea8d553472b25bf0b909e" 
-API_BASE_URL = "https://sastasms.pro/stubs/handler_api.php" 
+API_BASE_URL = "https://sastasms.pro/stubs/handler_api.php"
 OWNER_IDS = [8226471885, 8692723368] 
 # ==========================================
 
