@@ -1,13 +1,39 @@
+import os
+import time
+from threading import Thread
+from flask import Flask
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import requests
+
+# ================= 1. FLASK SERVER (24/7 Keep-Alive) =================
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is Running 24/7 Successfully!", 200
+
+def run_flask():
+    # Render apne aap PORT assign karega
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
+
+def keep_alive():
+    server = Thread(target=run_flask)
+    server.daemon = True
+    server.start()
+# =====================================================================
+
 
 # ==========================================
 # 🛑 YAHAN APNI DETAILS DALO 🛑
 # ==========================================
 BOT_TOKEN = "YAHAN_BOTFATHER_WALA_TOKEN_DALO" # BotFather se mila token yahan daalein
-CHANNEL_USERNAME = "@YourChannelUsername" # Apne channel ka username daalein (bot ko channel me add zaroor karna)
+CHANNEL_USERNAME = "@YourChannelUsername" # Apne channel ka username daalein
 SASTASMS_API_KEY = "Stp_c02085951a459afbedc5ba2203aea8d553472b25bf0b909e" # Tumhari SastaSMS API
+
+# 👑 YAHAN APNI AUR APNE DOST KI TELEGRAM USER ID DALO (Numbers mein)
+OWNER_IDS = [1234567890, 9876543210] # Example id hata kar apni asli ID daalna
 # ==========================================
 
 bot = telebot.TeleBot(BOT_TOKEN)
@@ -17,6 +43,10 @@ users_db = {}
 
 # --- CHANNEL JOIN CHECK KARNE WALA SYSTEM ---
 def check_membership(user_id):
+    # Agar user khud OWNER hai, toh usko channel join check bypass karne do (optional)
+    if user_id in OWNER_IDS:
+        return True
+        
     try:
         status = bot.get_chat_member(CHANNEL_USERNAME, user_id).status
         if status in ['member', 'administrator', 'creator']:
@@ -24,6 +54,15 @@ def check_membership(user_id):
         return False
     except:
         return False
+
+# --- ADMIN COMMAND (Sirf Owners ke liye) ---
+@bot.message_handler(commands=['admin'])
+def admin_panel(message):
+    user_id = message.from_user.id
+    if user_id in OWNER_IDS:
+        bot.reply_to(message, "👑 *Welcome Boss!* Aap dono owners mein se ek hain. Yahan aap aage chal kar admin buttons laga sakte hain.", parse_mode="Markdown")
+    else:
+        bot.reply_to(message, "❌ Aap owner nahi hain!")
 
 # --- START COMMAND & MAIN MENU ---
 @bot.message_handler(commands=['start'])
@@ -90,19 +129,31 @@ def callback_query(call):
     elif call.data == "services":
         bot.answer_callback_query(call.id, "Loading services... 🔄")
         
-        # Abhi dummy text dikhayega, jab main API endpoint set karenge tab asli price aayega
+        # Abhi dummy text dikhayega
         text = "🛒 *Available Services*\n\n📱 WhatsApp OTP - ₹10\n✈️ Telegram OTP - ₹12\n📸 Instagram OTP - ₹8\n\n_(Connecting to Server...)_"
             
         markup = InlineKeyboardMarkup()
         markup.add(InlineKeyboardButton("🔙 Back", callback_data="back_home"))
         bot.edit_message_text(text, call.message.chat.id, call.message.message_id, reply_markup=markup, parse_mode="Markdown")
 
-    # 5. Back Button (Wapas home screen par jaane ke liye)
+    # 5. Back Button
     elif call.data == "back_home":
         bot.delete_message(call.message.chat.id, call.message.message_id)
         send_welcome(call.message)
 
-# Bot ko lagataar on rakhne ke liye
-print("Bot is running perfectly... 🚀")
-bot.infinity_polling()
+# ================= 3. CRASH PROOF BOT RUNNER =================
+def start_bot():
+    while True:
+        try:
+            print("Bot polling started... 🚀")
+            bot.infinity_polling(timeout=60, long_polling_timeout=30)
+        except Exception as e:
+            print(f"Bot error: {e}. Restarting in 5 seconds... 🔄")
+            time.sleep(5)
 
+if __name__ == "__main__":
+    print("Starting Flask Web Server...")
+    keep_alive()  # Pehle Flask chalega
+    
+    print("Starting Main Bot...")
+    start_bot()   # Phir bot chalega crash-proof mode mein
