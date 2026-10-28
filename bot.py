@@ -18,7 +18,7 @@ API_BASE_URL = "https://sastasms.pro/stubs/handler_api.php"
 OWNER_IDS = [8226471885, 8692723368] 
 
 # 👇 WEBHOOK SECRET YAHAN DAALNA MAT BHOOLNA 👇
-SASTASMS_WEBHOOK_SECRET = "whsec_ed466ee6ef02d9414771ce42e835d400b74a5d7753343839" 
+SASTASMS_WEBHOOK_SECRET = "whsec_0d13a1039554d8fc9a0982ed3e12ed33de497fd59dccab4e" 
 # ==========================================
 
 bot = telebot.TeleBot(BOT_TOKEN)
